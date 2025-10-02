@@ -117,7 +117,6 @@ Cosa ti interessa di più scoprire?`;
       const requestBody = {
         model: MODEL,
         messages: this.conversationHistory,
-        reasoning: ENABLE_REASONING,
         max_tokens: 2000,
         temperature: 0.7,
         top_p: 0.9,
@@ -161,11 +160,17 @@ Cosa ti interessa di più scoprire?`;
       console.error('Errore OpenRouter:', error);
 
       if (axios.isAxiosError(error)) {
+        console.error('Response status:', error.response?.status);
+        console.error('Response data:', error.response?.data);
+        
         if (error.response?.status === 401) {
           return "🔐 Errore di autenticazione. Verifica la chiave API OpenRouter.";
         }
         if (error.response?.status === 429) {
           return "⏱️ Troppe richieste. Riprova tra qualche momento.";
+        }
+        if (error.response?.status === 400) {
+          return "⚠️ Richiesta non valida. Verifica la configurazione del modello.";
         }
         if (error.code === 'ECONNABORTED') {
           return "⏰ Timeout della richiesta. Il servizio potrebbe essere sovraccarico.";
