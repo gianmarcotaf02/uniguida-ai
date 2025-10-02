@@ -240,8 +240,8 @@ export function getUniversitiesByRegion(region: string): University[] {
 }
 
 export function getUniversitiesBySpecialization(specialization: string): University[] {
-  return ITALIAN_UNIVERSITIES.filter(uni => 
-    uni.specializations.some(spec => 
+  return ITALIAN_UNIVERSITIES.filter(uni =>
+    uni.specializations.some(spec =>
       spec.toLowerCase().includes(specialization.toLowerCase())
     )
   );

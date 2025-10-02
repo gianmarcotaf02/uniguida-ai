@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import LoadingSpinner from '../components/LoadingSpinner';
+import MURIntegrationPanel from '../components/MURIntegrationPanel';
 import { supabaseService } from '../services/supabaseService';
 import { HighSchool, UserProfile } from '../types';
 
@@ -144,6 +145,16 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ userProfile, onSave, interest
             ))}
           </div>
         </div>
+        
+        {/* Sezione Integrazione Dati MUR */}
+        <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
+          <h3 className="text-lg font-semibold mb-4 text-gray-800">🏛️ Database Università</h3>
+          <p className="text-sm text-gray-600 mb-4">
+            Integra i dati ufficiali del MUR per avere accesso a informazioni aggiornate su tutte le università italiane.
+          </p>
+          <MURIntegrationPanel />
+        </div>
+        
         <div className="flex items-center justify-end gap-4">
           {saveMessage && <p className="text-sm font-medium">{saveMessage}</p>}
           <button

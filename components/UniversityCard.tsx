@@ -33,7 +33,7 @@ export const UniversityCard: React.FC<UniversityCardProps> = ({ university, onCl
   };
 
   return (
-    <div 
+    <div
       className="university-card"
       onClick={handleClick}
       style={{ cursor: 'pointer' }}
@@ -58,7 +58,7 @@ export const UniversityCard: React.FC<UniversityCardProps> = ({ university, onCl
           <span className="detail-label">👥 Studenti:</span>
           <span className="detail-value">{university.students.toLocaleString()}</span>
         </div>
-        
+
         <div className="detail-row">
           <span className="detail-label">💰 Rette:</span>
           <span className="detail-value">{getTuitionText()}</span>
@@ -219,12 +219,12 @@ export const UniversityCard: React.FC<UniversityCardProps> = ({ university, onCl
           .university-card {
             padding: 16px;
           }
-          
+
           .university-card-header {
             flex-direction: column;
             gap: 12px;
           }
-          
+
           .detail-row {
             flex-direction: column;
             align-items: flex-start;

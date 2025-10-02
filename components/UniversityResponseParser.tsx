@@ -1,6 +1,6 @@
 import React from 'react';
-import { UniversityCard } from './UniversityCard';
 import { ITALIAN_UNIVERSITIES } from '../data/universities';
+import { UniversityCard } from './UniversityCard';
 
 interface UniversityResponseParserProps {
   message: string;
@@ -10,18 +10,18 @@ export const UniversityResponseParser: React.FC<UniversityResponseParserProps> =
   // Regex per identificare le menzioni di università nel formato **🏛️ [NOME]**
   const universityPattern = /\*\*🏛️\s+([^*]+)\*\*/g;
   const matches = Array.from(message.matchAll(universityPattern));
-  
+
   // Trova università corrispondenti nel database
   const mentionedUniversities = matches.map(match => {
     const universityName = match[1].trim();
-    
+
     // Cerca nel database per nome o nome breve
-    const found = ITALIAN_UNIVERSITIES.find(uni => 
+    const found = ITALIAN_UNIVERSITIES.find(uni =>
       uni.name.toLowerCase().includes(universityName.toLowerCase()) ||
       uni.shortName.toLowerCase().includes(universityName.toLowerCase()) ||
       universityName.toLowerCase().includes(uni.shortName.toLowerCase())
     );
-    
+
     return found;
   }).filter(Boolean);
 
@@ -38,27 +38,27 @@ export const UniversityResponseParser: React.FC<UniversityResponseParserProps> =
 
   // Dividi il messaggio prima e dopo le università per una migliore presentazione
   const parts = message.split(/\*\*🏛️[^*]+\*\*[\s\S]*?---/g);
-  
+
   return (
     <div className="ai-response">
       <div className="message-content">
         {formatMessage(parts[0] || message.substring(0, message.indexOf('**🏛️')))}
       </div>
-      
+
       {mentionedUniversities.length > 0 && (
         <div className="universities-section">
           <h4 className="universities-title">
             🎓 Università consigliate per te:
           </h4>
           {mentionedUniversities.map((university, index) => (
-            <UniversityCard 
-              key={university!.id} 
+            <UniversityCard
+              key={university!.id}
               university={university!}
             />
           ))}
         </div>
       )}
-      
+
       {parts.length > 1 && parts[parts.length - 1] && (
         <div className="message-content">
           {formatMessage(parts[parts.length - 1])}
@@ -129,7 +129,7 @@ export const UniversityResponseParser: React.FC<UniversityResponseParserProps> =
 // Funzione per formattare il testo con markdown base
 function formatMessage(text: string): React.ReactNode {
   if (!text) return null;
-  
+
   // Converti markdown in elementi React
   return text.split('\n').map((line, index) => {
     // Titoli
@@ -142,17 +142,17 @@ function formatMessage(text: string): React.ReactNode {
     if (line.startsWith('# ')) {
       return <h1 key={index}>{line.substring(2)}</h1>;
     }
-    
+
     // Lista puntata
     if (line.match(/^[-*]\s/)) {
       return <li key={index}>{line.substring(2)}</li>;
     }
-    
+
     // Lista numerata
     if (line.match(/^\d+\.\s/)) {
       return <li key={index}>{line.substring(line.indexOf('.') + 2)}</li>;
     }
-    
+
     // Testo normale
     if (line.trim()) {
       return (
@@ -161,7 +161,7 @@ function formatMessage(text: string): React.ReactNode {
         </p>
       );
     }
-    
+
     // Riga vuota
     return <br key={index} />;
   });
@@ -170,7 +170,7 @@ function formatMessage(text: string): React.ReactNode {
 // Formatta markdown inline (grassetto, corsivo)
 function formatInlineMarkdown(text: string): React.ReactNode {
   const parts = text.split(/(\*\*[^*]+\*\*|\*[^*]+\*)/g);
-  
+
   return parts.map((part, index) => {
     if (part.startsWith('**') && part.endsWith('**')) {
       return <strong key={index}>{part.slice(2, -2)}</strong>;
