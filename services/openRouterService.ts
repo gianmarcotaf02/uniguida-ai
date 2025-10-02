@@ -2,9 +2,9 @@ import axios from 'axios';
 import { UserProfile } from '../types';
 
 const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
-const API_KEY = (import.meta as any).env?.OPENROUTER_API_KEY || (typeof process !== 'undefined' ? process.env.OPENROUTER_API_KEY : undefined);
-const MODEL = (import.meta as any).env?.OPENROUTER_MODEL || (typeof process !== 'undefined' ? process.env.OPENROUTER_MODEL : 'x-ai/grok-4-fast-free');
-const ENABLE_REASONING = ((import.meta as any).env?.OPENROUTER_ENABLE_REASONING || (typeof process !== 'undefined' ? process.env.OPENROUTER_ENABLE_REASONING : 'false')) === 'true';
+const API_KEY = (import.meta as any).env.VITE_OPENROUTER_API_KEY;
+const MODEL = (import.meta as any).env.VITE_OPENROUTER_MODEL || 'x-ai/grok-4-fast-free';
+const ENABLE_REASONING = (import.meta as any).env.VITE_OPENROUTER_ENABLE_REASONING === 'true';
 
 if (!API_KEY) {
   console.warn("⚠️ OpenRouter API key not found. Please set OPENROUTER_API_KEY in your environment variables.");
