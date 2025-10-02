@@ -103,10 +103,12 @@ Cosa ti interessa di più scoprire?`;
     return initialPrompt;
   }
 
-  async sendMessage(message: string): Promise<string> {
+  async sendMessage(message: string, retryCount = 0): Promise<string> {
     if (!API_KEY) {
       return "❌ Servizio AI non disponibile. Configura la chiave API OpenRouter.";
     }
+
+    const maxRetries = 2;
 
     try {
       this.conversationHistory.push({
@@ -117,11 +119,9 @@ Cosa ti interessa di più scoprire?`;
       const requestBody = {
         model: MODEL,
         messages: this.conversationHistory,
-        max_tokens: 2000,
+        max_tokens: 1500,
         temperature: 0.7,
-        top_p: 0.9,
-        frequency_penalty: 0.1,
-        presence_penalty: 0.1
+        top_p: 0.9
       };
 
       const response = await axios.post<OpenRouterResponse>(
@@ -131,10 +131,10 @@ Cosa ti interessa di più scoprire?`;
           headers: {
             'Authorization': `Bearer ${API_KEY}`,
             'Content-Type': 'application/json',
-            'HTTP-Referer': (import.meta as any).env?.VITE_APP_URL || 'http://localhost:3000',
+            'HTTP-Referer': (import.meta as any).env?.VITE_APP_URL || 'https://uniguida-ai.vercel.app',
             'X-Title': 'UniGuida AI'
           },
-          timeout: 30000
+          timeout: 60000
         }
       );
 
@@ -162,7 +162,7 @@ Cosa ti interessa di più scoprire?`;
       if (axios.isAxiosError(error)) {
         console.error('Response status:', error.response?.status);
         console.error('Response data:', error.response?.data);
-        
+
         if (error.response?.status === 401) {
           return "🔐 Errore di autenticazione. Verifica la chiave API OpenRouter.";
         }
@@ -172,8 +172,13 @@ Cosa ti interessa di più scoprire?`;
         if (error.response?.status === 400) {
           return "⚠️ Richiesta non valida. Verifica la configurazione del modello.";
         }
+        if (error.code === 'ECONNABORTED' && retryCount < maxRetries) {
+          console.log(`🔄 Retry ${retryCount + 1}/${maxRetries} dopo timeout...`);
+          await new Promise(resolve => setTimeout(resolve, 2000));
+          return this.sendMessage(message, retryCount + 1);
+        }
         if (error.code === 'ECONNABORTED') {
-          return "⏰ Timeout della richiesta. Il servizio potrebbe essere sovraccarico.";
+          return `⏰ Timeout della richiesta dopo ${maxRetries} tentativi. Il servizio potrebbe essere sovraccarico.`;
         }
       }
 
