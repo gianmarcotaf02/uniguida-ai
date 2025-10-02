@@ -7,7 +7,7 @@ const MODEL = (import.meta as any).env.VITE_OPENROUTER_MODEL || 'x-ai/grok-4-fas
 const ENABLE_REASONING = (import.meta as any).env.VITE_OPENROUTER_ENABLE_REASONING === 'true';
 
 if (!API_KEY) {
-  console.warn("⚠️ OpenRouter API key not found. Please set OPENROUTER_API_KEY in your environment variables.");
+  console.warn("⚠️ OpenRouter API key not found. Please set VITE_OPENROUTER_API_KEY in your environment variables.");
 }
 
 interface OpenRouterMessage {
