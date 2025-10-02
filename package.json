@@ -1,0 +1,47 @@
+{
+  "name": "uniguida-ai",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Orientamento universitario intelligente per gli studenti italiani",
+  "keywords": [
+    "ai",
+    "university",
+    "guidance",
+    "students",
+    "italy",
+    "react",
+    "typescript"
+  ],
+  "author": "UniGuida AI Team",
+  "license": "MIT",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "lint": "echo 'Lint check - install ESLint for full functionality'",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@google/genai": "^1.22.0",
+    "@supabase/supabase-js": "^2.58.0",
+    "axios": "^1.12.2",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.1.14",
+    "@types/node": "^22.14.0",
+    "@types/react": "^18.2.66",
+    "@types/react-dom": "^18.2.22",
+    "@vitejs/plugin-react": "^5.0.0",
+    "autoprefixer": "^10.4.21",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^3.4.18",
+    "typescript": "~5.8.2",
+    "vite": "^6.2.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

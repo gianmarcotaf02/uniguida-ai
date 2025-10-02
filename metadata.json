@@ -1,0 +1,5 @@
+{
+  "name": "UniGuida AI",
+  "description": "An AI-powered web application designed to provide simple and reliable university guidance for students in Italy. It helps identify suitable university paths based on background and interests, offering personalized advice through an AI chat.",
+  "requestFramePermissions": []
+}
