@@ -3,7 +3,7 @@ import { UserProfile } from '../types';
 
 const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
 const API_KEY = (import.meta as any).env.VITE_OPENROUTER_API_KEY;
-const MODEL = (import.meta as any).env.VITE_OPENROUTER_MODEL || 'x-ai/grok-4-fast:free';
+const MODEL = (import.meta as any).env.VITE_OPENROUTER_MODEL || 'nvidia/nemotron-nano-9b-v2:free';
 const ENABLE_REASONING = (import.meta as any).env.VITE_OPENROUTER_ENABLE_REASONING === 'true';
 
 if (!API_KEY) {
