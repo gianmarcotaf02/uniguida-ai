@@ -97,8 +97,8 @@ const Footer: React.FC = () => {
 
             <div className="flex items-center space-x-4 text-sm text-gray-400">
               <span className="flex items-center space-x-2">
-                <span>⚡</span>
-                <span>Powered by Google Gemini AI</span>
+                <span>🤖</span>
+                <span>Powered by NVIDIA Nemotron AI</span>
               </span>
             </div>
           </div>

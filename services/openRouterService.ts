@@ -108,7 +108,7 @@ Usa questi risultati per suggerire università e corsi più adatti.`;
    - Includi consigli pratici su ammissioni e preparazione test`;
 
     return context;
-  }  async startChatSession(userProfile: UserProfile, quizResults: Record<string, number> | null): Promise<string> {
+  } async startChatSession(userProfile: UserProfile, quizResults: Record<string, number> | null): Promise<string> {
     const systemInstruction = this.buildSystemInstruction(userProfile, quizResults);
 
     this.conversationHistory = [

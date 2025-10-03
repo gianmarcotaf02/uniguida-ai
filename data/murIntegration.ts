@@ -35,16 +35,16 @@ export const MUR_DATASET_URLS = {
   // Dataset Metadati
   ATENEI_CSV: 'https://dati-ustat.mur.gov.it/dataset/metadati/resource/820aefe6-0662-4656-84ec-d8859a2a3b7e',
   ATENEI_XLSX: 'https://dati-ustat.mur.gov.it/dataset/metadati/resource/a332a119-6c4b-44f5-80eb-3aca45a9e8e8',
-  
+
   CLASSI_LAUREA_CSV: 'https://dati-ustat.mur.gov.it/dataset/metadati/resource/6755c8e6-dfa0-4605-a401-674a7b431edb',
   CLASSI_LAUREA_XLSX: 'https://dati-ustat.mur.gov.it/dataset/metadati/resource/adb4d6bd-0ad9-4004-8e23-b7baa2e45495',
-  
+
   OFFERTA_FORMATIVA_2010_2024_CSV: 'https://dati-ustat.mur.gov.it/dataset/metadati/resource/c0e63906-7190-4568-892b-0cf399f56071',
-  
+
   // Dataset Iscritti (dati aggiornati studenti)
   ISCRITTI_CSV: 'https://dati-ustat.mur.gov.it/dataset/iscritti/resource/', // + resource_id
   ISCRITTI_XLSX: 'https://dati-ustat.mur.gov.it/dataset/iscritti/resource/', // + resource_id
-  
+
   // Dataset Laureati
   LAUREATI_CSV: 'https://dati-ustat.mur.gov.it/dataset/laureati/resource/', // + resource_id
   LAUREATI_XLSX: 'https://dati-ustat.mur.gov.it/dataset/laureati/resource/' // + resource_id
@@ -52,7 +52,7 @@ export const MUR_DATASET_URLS = {
 
 // Classe per gestire l'integrazione dei dati MUR
 export class MURDataIntegrator {
-  
+
   /**
    * Converte i dati MUR in formato University
    */
@@ -87,7 +87,7 @@ export class MURDataIntegrator {
     };
 
     const type = getUniversityType(murData.TIPO_ATENEO);
-    
+
     return {
       id: `mur-${murData.COD_ATENEO}`,
       name: murData.ATENEO,
@@ -192,7 +192,7 @@ async function processMURData(csvFile: File) {
       skipEmptyLines: true,
       encoding: 'UTF-8',
       complete: (results) => {
-        const universities = results.data.map((row: any) => 
+        const universities = results.data.map((row: any) =>
           MURDataIntegrator.convertMURToUniversity(row)
         );
         resolve(universities);
@@ -210,7 +210,7 @@ async function processMURData(csvFile: File) {
 
 // Funzioni di utility per lavorare con i dati MUR
 export const MURUtils = {
-  
+
   /**
    * Filtra università per regione usando dati MUR
    */

@@ -129,13 +129,13 @@ const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
             <div className="flex flex-col sm:flex-row justify-center gap-4">
               <button
                 onClick={() => onNavigate(Page.Questionnaire)}
-                className="bg-white text-primary-600 hover:bg-gray-100 font-semibold py-4 px-8 rounded-lg shadow-soft-lg transition-all duration-200 transform hover:scale-105"
+                className="bg-blue-600 text-white hover:bg-blue-700 font-semibold py-4 px-8 rounded-lg shadow-soft-lg transition-all duration-200 transform hover:scale-105"
               >
                 Inizia Ora Gratis
               </button>
               <button
                 onClick={() => onNavigate(Page.Profile)}
-                className="border-2 border-white text-white hover:bg-white hover:text-primary-600 font-semibold py-4 px-8 rounded-lg transition-all duration-200 transform hover:scale-105"
+                className="border-2 border-white text-white hover:bg-white hover:text-blue-600 font-semibold py-4 px-8 rounded-lg transition-all duration-200 transform hover:scale-105"
               >
                 Crea il tuo Profilo
               </button>

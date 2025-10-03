@@ -145,7 +145,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ userProfile, onSave, interest
             ))}
           </div>
         </div>
-        
+
         {/* Sezione Integrazione Dati MUR */}
         <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
           <h3 className="text-lg font-semibold mb-4 text-gray-800">🏛️ Database Università</h3>
@@ -154,7 +154,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ userProfile, onSave, interest
           </p>
           <MURIntegrationPanel />
         </div>
-        
+
         <div className="flex items-center justify-end gap-4">
           {saveMessage && <p className="text-sm font-medium">{saveMessage}</p>}
           <button
