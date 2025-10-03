@@ -27,17 +27,56 @@ export class LocalFileProcessor {
         encoding: 'UTF-8',
         complete: (results) => {
           try {
+            console.log('🔍 Debug CSV parsing:');
+            console.log('Numero righe:', results.data.length);
+            console.log('Prima riga esempio:', results.data[0]);
+            console.log('Colonne disponibili:', Object.keys(results.data[0] || {}));
+
             const universities: University[] = [];
 
             if (fileType === 'atenei') {
+              // Mappatura flessibile per i nomi delle colonne
+              const findColumn = (row: any, possibleNames: string[]): string | null => {
+                for (const name of possibleNames) {
+                  if (row[name] !== undefined && row[name] !== null && row[name] !== '') {
+                    return row[name];
+                  }
+                }
+                return null;
+              };
+
               // Processa file atenei
-              results.data.forEach((row: any) => {
-                if (row.COD_ATENEO && row.ATENEO) {
+              results.data.forEach((row: any, index: number) => {
+                // Debug prime 3 righe
+                if (index < 3) {
+                  console.log(`Riga ${index}:`, row);
+                }
+
+                // Cerca colonne con nomi diversi possibili
+                const codAteneo = findColumn(row, ['COD_ATENEO', 'CODICE_ATENEO', 'CODICE', 'ID_ATENEO', 'cod_ateneo']);
+                const nomeAteneo = findColumn(row, ['ATENEO', 'NOME_ATENEO', 'DENOMINAZIONE', 'UNIVERSITA', 'ateneo']);
+
+                if (codAteneo && nomeAteneo) {
                   try {
-                    const university = MURDataIntegrator.convertMURToUniversity(row);
+                    // Crea oggetto normalizzato per MURDataIntegrator
+                    const normalizedRow = {
+                      COD_ATENEO: codAteneo,
+                      ATENEO: nomeAteneo,
+                      TIPO_ATENEO: findColumn(row, ['TIPO_ATENEO', 'TIPO', 'TIPOLOGIA', 'tipo_ateneo']) || 'Statale',
+                      REGIONE: findColumn(row, ['REGIONE', 'regione']) || '',
+                      PROVINCIA: findColumn(row, ['PROVINCIA', 'PROV', 'provincia']) || '',
+                      COMUNE: findColumn(row, ['COMUNE', 'CITTA', 'CITY', 'comune']) || ''
+                    };
+
+                    const university = MURDataIntegrator.convertMURToUniversity(normalizedRow);
                     universities.push(university);
                   } catch (err) {
                     console.warn('Errore conversione riga:', row, err);
+                  }
+                } else {
+                  // Debug righe che non passano la verifica
+                  if (index < 5) {
+                    console.warn(`Riga ${index} scartata - COD_ATENEO:`, codAteneo, 'ATENEO:', nomeAteneo);
                   }
                 }
               });
@@ -50,6 +89,8 @@ export class LocalFileProcessor {
                 }
               });
             }
+
+            console.log(`✅ Processamento completato: ${universities.length} università elaborate da ${results.data.length} righe`);
 
             resolve({
               success: true,
