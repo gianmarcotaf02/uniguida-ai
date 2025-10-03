@@ -35,11 +35,24 @@ export class LocalFileProcessor {
             const universities: University[] = [];
 
             if (fileType === 'atenei') {
-              // Mappatura flessibile per i nomi delle colonne
+              // Mappatura flessibile per i nomi delle colonne (case-insensitive)
               const findColumn = (row: any, possibleNames: string[]): string | null => {
+                // Prima prova match esatto
                 for (const name of possibleNames) {
                   if (row[name] !== undefined && row[name] !== null && row[name] !== '') {
                     return row[name];
+                  }
+                }
+
+                // Poi prova case-insensitive
+                const rowKeys = Object.keys(row);
+                for (const name of possibleNames) {
+                  for (const key of rowKeys) {
+                    if (key.toLowerCase() === name.toLowerCase() &&
+                        row[key] !== undefined && row[key] !== null && row[key] !== '') {
+                      console.log(`📝 Mapped column: "${key}" → "${name}"`);
+                      return row[key];
+                    }
                   }
                 }
                 return null;
@@ -52,9 +65,41 @@ export class LocalFileProcessor {
                   console.log(`Riga ${index}:`, row);
                 }
 
-                // Cerca colonne con nomi diversi possibili
-                const codAteneo = findColumn(row, ['COD_ATENEO', 'CODICE_ATENEO', 'CODICE', 'ID_ATENEO', 'cod_ateneo']);
-                const nomeAteneo = findColumn(row, ['ATENEO', 'NOME_ATENEO', 'DENOMINAZIONE', 'UNIVERSITA', 'ateneo']);
+                // Cerca colonne con nomi diversi possibili (case-insensitive)
+                const codAteneo = findColumn(row, [
+                  'COD_ATENEO', 'COD_Ateneo', 'cod_ateneo', 'Cod_Ateneo',
+                  'CODICE_ATENEO', 'Codice_Ateneo', 'codice_ateneo',
+                  'CODICE', 'Codice', 'codice',
+                  'ID_ATENEO', 'Id_Ateneo', 'id_ateneo'
+                ]);
+
+                const nomeAteneo = findColumn(row, [
+                  'ATENEO', 'Ateneo', 'ateneo',
+                  'NOME_ATENEO', 'Nome_Ateneo', 'nome_ateneo',
+                  'DENOMINAZIONE', 'Denominazione', 'denominazione',
+                  'UNIVERSITA', 'Universita', 'universita', 'Università'
+                ]);
+
+                const tipoAteneo = findColumn(row, [
+                  'TIPO_ATENEO', 'Tipo_Ateneo', 'tipo_ateneo',
+                  'TIPO', 'Tipo', 'tipo',
+                  'TIPOLOGIA', 'Tipologia', 'tipologia'
+                ]);
+
+                const regione = findColumn(row, [
+                  'REGIONE', 'Regione', 'regione'
+                ]);
+
+                const provincia = findColumn(row, [
+                  'PROVINCIA', 'Provincia', 'provincia',
+                  'PROV', 'Prov', 'prov'
+                ]);
+
+                const comune = findColumn(row, [
+                  'COMUNE', 'Comune', 'comune',
+                  'CITTA', 'Citta', 'citta', 'Città',
+                  'CITY', 'City', 'city'
+                ]);
 
                 if (codAteneo && nomeAteneo) {
                   try {
@@ -62,10 +107,10 @@ export class LocalFileProcessor {
                     const normalizedRow = {
                       COD_ATENEO: codAteneo,
                       ATENEO: nomeAteneo,
-                      TIPO_ATENEO: findColumn(row, ['TIPO_ATENEO', 'TIPO', 'TIPOLOGIA', 'tipo_ateneo']) || 'Statale',
-                      REGIONE: findColumn(row, ['REGIONE', 'regione']) || '',
-                      PROVINCIA: findColumn(row, ['PROVINCIA', 'PROV', 'provincia']) || '',
-                      COMUNE: findColumn(row, ['COMUNE', 'CITTA', 'CITY', 'comune']) || ''
+                      TIPO_ATENEO: tipoAteneo || 'Statale',
+                      REGIONE: regione || '',
+                      PROVINCIA: provincia || '',
+                      COMUNE: comune || ''
                     };
 
                     const university = MURDataIntegrator.convertMURToUniversity(normalizedRow);
