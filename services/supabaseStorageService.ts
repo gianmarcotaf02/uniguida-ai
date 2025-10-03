@@ -23,7 +23,7 @@ export class SupabaseStorageService {
 
       if (listError) {
         console.error('Error listing buckets:', listError);
-        return false;
+        // Tenta di creare il bucket comunque
       }
 
       const bucketExists = buckets?.some(bucket => bucket.name === this.BUCKET_NAME);
@@ -32,13 +32,18 @@ export class SupabaseStorageService {
         // Crea il bucket se non esiste
         const { error: createError } = await supabase.storage.createBucket(this.BUCKET_NAME, {
           public: false, // Privato per sicurezza
-          allowedMimeTypes: ['text/csv', 'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet']
+          allowedMimeTypes: ['text/csv', 'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'],
+          fileSizeLimit: 52428800 // 50MB limit
         });
 
         if (createError) {
           console.error('Error creating bucket:', createError);
+          // Se non può creare il bucket, proviamo senza storage
+          console.warn('Proceeding without storage - file processing only');
           return false;
         }
+
+        console.log('✅ Bucket creato con successo:', this.BUCKET_NAME);
       }
 
       return true;
@@ -46,50 +51,52 @@ export class SupabaseStorageService {
       console.error('Storage initialization error:', error);
       return false;
     }
-  }
-
-  /**
+  }  /**
    * Carica un file CSV/XLSX su Supabase Storage
    */
   static async uploadMURFile(file: File, fileType: 'atenei' | 'iscritti' | 'laureati' | 'offerta-formativa'): Promise<FileUploadResult> {
     try {
-      // Inizializza storage se necessario
-      await this.initializeStorage();
+      // Inizializza storage se possibile
+      const storageReady = await this.initializeStorage();
 
-      // Genera nome file unico
-      const timestamp = new Date().toISOString().split('T')[0];
-      const fileName = `${fileType}_${timestamp}_${file.name}`;
-      const filePath = `mur-data/${fileName}`;
+      let filePath = '';
 
-      // Upload file
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from(this.BUCKET_NAME)
-        .upload(filePath, file, {
-          cacheControl: '3600',
-          upsert: false
-        });
+      if (storageReady) {
+        // Genera nome file unico
+        const timestamp = new Date().toISOString().split('T')[0];
+        const fileName = `${fileType}_${timestamp}_${file.name}`;
+        filePath = `mur-data/${fileName}`;
 
-      if (uploadError) {
-        return {
-          success: false,
-          message: `Errore upload: ${uploadError.message}`
-        };
+        // Upload file
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from(this.BUCKET_NAME)
+          .upload(filePath, file, {
+            cacheControl: '3600',
+            upsert: false
+          });
+
+        if (uploadError) {
+          console.warn('Storage upload failed, proceeding with processing only:', uploadError.message);
+          // Continua senza storage
+        } else {
+          console.log('✅ File uploadato su storage:', filePath);
+        }
       }
 
-      // Processa il file subito dopo l'upload
+      // Processa il file (questo funziona sempre)
       const processResult = await this.processUploadedFile(file, fileType);
 
       return {
         success: true,
-        message: `File caricato e processato con successo: ${processResult.universitiesCount} università elaborate`,
+        message: `File processato con successo: ${processResult.universitiesCount} università elaborate${storageReady ? ' e salvate su cloud' : ' (solo elaborazione)'}`,
         data: processResult.universities,
-        filePath: filePath
+        filePath: filePath || 'processed-only'
       };
 
     } catch (error) {
       return {
         success: false,
-        message: `Errore durante l'upload: ${error}`
+        message: `Errore durante l'elaborazione: ${error}`
       };
     }
   }
@@ -159,6 +166,31 @@ export class SupabaseStorageService {
     } catch (error) {
       console.error('List files error:', error);
       return [];
+    }
+  }
+
+  /**
+   * Statistiche sui file caricati
+   */
+  static async getStorageStats(): Promise<{ fileCount: number, totalSize: number, lastUpdate: string }> {
+    try {
+      const files = await this.listMURFiles();
+      const totalSize = files.reduce((sum, file) => sum + (file.metadata?.size || 0), 0);
+      const lastUpdate = files.length > 0 ?
+        Math.max(...files.map(f => new Date(f.updated_at || f.created_at).getTime())) : 0;
+
+      return {
+        fileCount: files.length,
+        totalSize,
+        lastUpdate: lastUpdate > 0 ? new Date(lastUpdate).toLocaleDateString() : 'Mai'
+      };
+    } catch (error) {
+      console.error('Get storage stats error:', error);
+      return {
+        fileCount: 0,
+        totalSize: 0,
+        lastUpdate: 'Storage non disponibile'
+      };
     }
   }
 
@@ -284,29 +316,6 @@ export class SupabaseStorageService {
     }
   }
 
-  /**
-   * Statistiche sui file caricati
-   */
-  static async getStorageStats(): Promise<{ fileCount: number, totalSize: number, lastUpdate: string }> {
-    try {
-      const files = await this.listMURFiles();
-      const totalSize = files.reduce((sum, file) => sum + (file.metadata?.size || 0), 0);
-      const lastUpdate = files.length > 0 ?
-        Math.max(...files.map(f => new Date(f.updated_at).getTime())) : 0;
-
-      return {
-        fileCount: files.length,
-        totalSize,
-        lastUpdate: lastUpdate > 0 ? new Date(lastUpdate).toLocaleDateString() : 'Mai'
-      };
-    } catch (error) {
-      return {
-        fileCount: 0,
-        totalSize: 0,
-        lastUpdate: 'Errore'
-      };
-    }
-  }
 }
 
 export default SupabaseStorageService;

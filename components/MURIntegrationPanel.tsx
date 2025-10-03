@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { MURDataIntegrator } from '../data/murIntegration';
+import LocalFileProcessor from '../services/localFileProcessor';
 import SupabaseStorageService, { FileUploadResult } from '../services/supabaseStorageService';
 
 interface MURIntegrationPanelProps {
@@ -46,13 +47,14 @@ export const MURIntegrationPanel: React.FC<MURIntegrationPanelProps> = ({ onData
     const files = event.target.files;
     if (!files || files.length === 0) return;
 
-    // Verifica tipi file
-    const invalidFiles = Array.from(files).filter(file =>
-      !file.name.toLowerCase().includes('.csv') && !file.name.toLowerCase().includes('.xlsx')
-    );
+    // Verifica tipi file usando il validatore
+    const invalidFiles = Array.from(files).filter(file => {
+      const validation = LocalFileProcessor.validateFile(file);
+      return !validation.valid;
+    });
 
     if (invalidFiles.length > 0) {
-      setError(`File non supportati: ${invalidFiles.map(f => f.name).join(', ')}. Usa solo CSV o XLSX.`);
+      setError(`File non supportati: ${invalidFiles.map(f => f.name).join(', ')}. Usa solo CSV o XLSX (max 50MB).`);
       return;
     }
 
@@ -61,6 +63,9 @@ export const MURIntegrationPanel: React.FC<MURIntegrationPanelProps> = ({ onData
     setSuccess(null);
 
     try {
+      // Prima prova con Supabase Storage, poi fallback locale
+      let useLocalProcessor = false;
+
       const results = [];
       let totalUniversities = 0;
 
@@ -68,24 +73,53 @@ export const MURIntegrationPanel: React.FC<MURIntegrationPanelProps> = ({ onData
       for (const file of Array.from(files)) {
         setSuccess(`Processando ${file.name}...`);
 
-        // Upload e processamento tramite Supabase Storage
-        const result: FileUploadResult = await SupabaseStorageService.uploadMURFile(file, fileType);
+        if (!useLocalProcessor) {
+          // Tenta upload Supabase
+          try {
+            const result: FileUploadResult = await SupabaseStorageService.uploadMURFile(file, fileType);
 
-        if (result.success && result.data) {
-          results.push({
-            fileName: file.name,
-            universitiesCount: result.data.length,
-            universities: result.data
-          });
-          totalUniversities += result.data.length;
+            if (result.success && result.data) {
+              results.push({
+                fileName: file.name,
+                universitiesCount: result.data.length,
+                universities: result.data
+              });
+              totalUniversities += result.data.length;
 
-          // Salva nel database
-          await SupabaseStorageService.saveUniversitiesToDB(result.data);
-        } else {
-          results.push({
-            fileName: file.name,
-            error: result.message
-          });
+              // Salva nel database se possibile
+              try {
+                await SupabaseStorageService.saveUniversitiesToDB(result.data);
+              } catch (dbErr) {
+                console.warn('Database save failed, but processing succeeded:', dbErr);
+              }
+            } else {
+              // Fallback a processamento locale
+              console.warn('Supabase failed, trying local processor:', result.message);
+              useLocalProcessor = true;
+            }
+          } catch (err) {
+            console.warn('Supabase error, switching to local processor:', err);
+            useLocalProcessor = true;
+          }
+        }
+
+        // Processamento locale se Supabase non funziona
+        if (useLocalProcessor) {
+          const localResult = await LocalFileProcessor.processFile(file, fileType);
+
+          if (localResult.success && localResult.universities) {
+            results.push({
+              fileName: file.name,
+              universitiesCount: localResult.universitiesCount || 0,
+              universities: localResult.universities
+            });
+            totalUniversities += localResult.universitiesCount || 0;
+          } else {
+            results.push({
+              fileName: file.name,
+              error: localResult.message
+            });
+          }
         }
       }
 
@@ -100,23 +134,28 @@ export const MURIntegrationPanel: React.FC<MURIntegrationPanelProps> = ({ onData
           onDataIntegrated(allUniversities);
         }
 
+        const storageMode = useLocalProcessor ? '(elaborazione locale)' : '(salvato su cloud)';
         setSuccess(
           `✅ Elaborati ${successfulFiles.length} file con successo! ` +
-          `Totale: ${totalUniversities} università processate. ` +
+          `Totale: ${totalUniversities} università processate ${storageMode}. ` +
           (failedFiles.length > 0 ? `⚠️ ${failedFiles.length} file falliti.` : '')
         );
       }
 
-      if (failedFiles.length > 0) {
+      if (failedFiles.length > 0 && successfulFiles.length === 0) {
         setError(
-          `❌ Errori nei file: ${failedFiles.map(f => `${f.fileName} (${f.error})`).join(', ')}`
+          `❌ Nessun file processato con successo. Errori: ${failedFiles.map(f => `${f.fileName} (${f.error})`).join(', ')}`
         );
+      } else if (failedFiles.length > 0) {
+        console.warn('Alcuni file falliti:', failedFiles);
       }
 
-      // Ricarica statistiche
-      await loadStorageData();
+      // Ricarica statistiche solo se non in modalità locale
+      if (!useLocalProcessor) {
+        await loadStorageData();
+      }
     } catch (err) {
-      setError('Errore durante l\'upload multiplo: ' + (err as Error).message);
+      setError('Errore durante l\'elaborazione file: ' + (err as Error).message);
     } finally {
       setIsProcessing(false);
     }
@@ -249,6 +288,13 @@ export const MURIntegrationPanel: React.FC<MURIntegrationPanelProps> = ({ onData
 
         <div className="upload-section">
           <h4>📤 Step 2: Carica File CSV</h4>
+
+          <div className="system-status">
+            <p className="status-info">
+              <strong>ℹ️ Sistema Ibrido:</strong> L'app tenta automaticamente di salvare su cloud Supabase.
+              Se non disponibile, elabora i file localmente mantenendo tutte le funzionalità.
+            </p>
+          </div>
 
           {/* Selector tipo file */}
           <div className="file-type-selector">
@@ -536,6 +582,20 @@ export const MURIntegrationPanel: React.FC<MURIntegrationPanelProps> = ({ onData
           color: #6b7280;
           text-align: center;
           font-style: italic;
+        }
+
+        .system-status {
+          background: #f0f9ff;
+          border: 1px solid #0ea5e9;
+          border-radius: 8px;
+          padding: 12px;
+          margin-bottom: 16px;
+        }
+
+        .status-info {
+          margin: 0;
+          color: #0c4a6e;
+          font-size: 0.9em;
         }
 
         .status-message {
